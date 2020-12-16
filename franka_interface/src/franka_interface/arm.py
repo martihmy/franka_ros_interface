@@ -368,7 +368,9 @@ class ArmInterface(object):
 
         self._cartesian_pose = {
             'position': cart_pose_trans_mat[:3,3],
-            'orientation': quaternion.from_rotation_matrix(cart_pose_trans_mat[:3,:3]) }
+            'orientation': quaternion.from_rotation_matrix(cart_pose_trans_mat[:3,:3]),
+            'orientation_R': cart_pose_trans_mat[:3,:3],
+            'transformation_matrix': cart_pose_trans_mat }
 
         self._cartesian_effort = {
             'force': np.asarray([ msg.O_F_ext_hat_K.wrench.force.x,
@@ -472,6 +474,8 @@ class ArmInterface(object):
 
           - 'position': np.array of x, y, z
           - 'orientation': quaternion x,y,z,w in quaternion format
+          - 'orientation_R': Rotation relative to base
+          - 'transformation_matrix': 4x4 relative to base
 
         """
         return deepcopy(self._cartesian_pose)
@@ -488,19 +492,17 @@ class ArmInterface(object):
         """
         return deepcopy(self._cartesian_velocity)
 
-    def endpoint_effort(self, in_base_frame=True):
+    def endpoint_effort(self):
         """
         Return Cartesian endpoint wrench {force, torque}.
 
-        :param in_base_frame: if True, returns end-effector effort with respect to base frame, else in stiffness frame [default: True]
-        :type in_base_frame: bool
         :rtype: dict({str:np.ndarray (shape:(3,)),str:np.ndarray (shape:(3,))})
-        :return: force and torque at endpoint as named tuples in a dict in the base frame of the robot or in the stiffness frame (wrist)
+        :return: force and torque at endpoint as named tuples in a dict
 
           - 'force': Cartesian force on x,y,z axes in np.ndarray format
           - 'torque': Torque around x,y,z axes in np.ndarray format
         """
-        return deepcopy(self._cartesian_effort) if in_base_frame else deepcopy(self._stiffness_frame_effort)
+        return deepcopy(self._cartesian_effort)
 
     def exit_control_mode(self, timeout=0.2):
         """
